@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Remove Color Tags
 // @namespace    http://tampermonkey.net/
-// @version      0.1
-// @description  Removes annoying color tags from all text rendered in the RC-HELP Jira
+// @version      0.2
+// @description  Removes annoying color tags from all text rendered in the RC-HELP Jira, now including dynamic content
 // @author       Rory + CGPT
 // @match        *://*/*
 // @grant        none
@@ -36,6 +36,22 @@
         processChildNodes(document.body); // Process child nodes recursively starting from body
     }
 
-    // Run the main function
+    // Run the main function to remove color tags from the existing content
     removeColorTagsFromPage();
+
+    // MutationObserver to watch for DOM changes and remove color tags from new content
+    const observer = new MutationObserver((mutationsList) => {
+        for (let mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) {
+                        processChildNodes(node); // Process new nodes added to the DOM
+                    }
+                });
+            }
+        }
+    });
+
+    // Start observing the document body for child node changes and subtree changes
+    observer.observe(document.body, { childList: true, subtree: true });
 })();
